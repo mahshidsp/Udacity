@@ -46,13 +46,8 @@ mlp = Net()
 
 def train_network_classification(net, train_loader, test_loader):
     num_epochs = 20
-    
-    
-    #criterion = nn.NLLLoss()
     criterion = nn.CrossEntropyLoss()
-   
-    #optimizer = optim.SGD(mlp.parameters(), lr=0.005, momentum=0.9)
-    optimizer = optim.Adam(net.parameters(), lr=0.01)
+    optimizer = optim.Adam(net.parameters(), lr=0.001)
     
     # Establish a list for our history
     train_loss_history = list()
