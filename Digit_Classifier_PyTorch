@@ -1,0 +1,108 @@
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+import torchvision
+import torchvision.transforms as transforms
+import matplotlib.pyplot as plt
+import numpy as np
+
+from torchvision import datasets
+from torch.utils.data import DataLoader
+
+transform=transforms.Compose([transforms.ToTensor(), # first, convert image to PyTorch tensor
+                        transforms.Normalize((0.1307,), (0.3081,)), # normalize inputs
+                        transforms.Lambda(lambda x: torch.flatten(x)) # flatten inputs
+                        ])
+
+# Create training set and define training dataloader
+## YOUR CODE HERE ##
+training_data = datasets.MNIST(root="data", train=True, download=True,transform=transform)
+train_loader = DataLoader(training_data,batch_size=32, shuffle=True)
+
+# Create test set and define test dataloader
+## YOUR CODE HERE ##
+test_data =  datasets.MNIST(root="data", train=False, download=True,transform=transform)
+test_loader = DataLoader(test_data,batch_size=32, shuffle=True)
+
+
+class Net(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.fc1 = nn.Linear(784, 128)
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, 10)
+
+    def forward(self, x):
+        x = F.sigmoid(self.fc1(x))
+        x = F.sigmoid(self.fc2(x))
+        x = self.fc3(x)
+        x = F.log_softmax(self.fc3(x),dim=1)
+        return x
+    
+mlp = Net()
+
+
+def train_network_classification(net, train_loader, test_loader):
+    num_epochs = 20
+    
+    
+    #criterion = nn.NLLLoss()
+    criterion = nn.CrossEntropyLoss()
+   
+    #optimizer = optim.SGD(mlp.parameters(), lr=0.005, momentum=0.9)
+    optimizer = optim.Adam(net.parameters(), lr=0.01)
+    
+    # Establish a list for our history
+    train_loss_history = list()
+    val_loss_history = list()
+
+    for epoch in range(num_epochs):
+        net.train()
+        train_loss = 0.0
+        train_correct = 0
+        for i, data in enumerate(train_loader):
+            # data is a list of [inputs, labels]
+            inputs, labels = data
+            
+            # Pass to GPU if available.
+            if torch.cuda.is_available():
+                inputs, labels = inputs.cuda(), labels.cuda()
+
+            optimizer.zero_grad()
+
+            outputs = net(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            
+            _, preds = torch.max(outputs.data, 1)
+            train_correct += (preds == labels).sum().item()
+            train_loss += loss.item()
+        print(f'Epoch {epoch + 1} training accuracy: {train_correct/len(train_loader):.2f}% training loss: {train_loss/len(train_loader):.5f}')
+        train_loss_history.append(train_loss)
+
+        
+        val_loss = 0.0
+        val_correct = 0
+        net.eval()
+        for inputs, labels in test_loader:
+            if torch.cuda.is_available():
+                inputs, labels = inputs.cuda(), labels.cuda()
+            
+            outputs = net(inputs)
+            loss = criterion(outputs, labels)
+            
+            _, preds = torch.max(outputs.data, 1)
+            val_correct += (preds == labels).sum().item()
+            val_loss += loss.item()
+        print(f'Epoch {epoch + 1} validation accuracy: {val_correct/len(test_loader):.2f}% validation loss: {val_loss/len(test_loader):.5f}')
+        val_loss_history.append(val_loss)           
+
+    plt.plot(train_loss_history, label="Training Loss")
+    plt.plot(val_loss_history, label="Validation Loss")
+    plt.legend()
+    plt.show()
+    
+    
+    train_network_classification(mlp, train_loader, test_loader)
