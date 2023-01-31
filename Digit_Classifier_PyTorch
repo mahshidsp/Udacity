@@ -37,10 +37,11 @@ class Net(nn.Module):
         x = F.sigmoid(self.fc1(x))
         x = F.sigmoid(self.fc2(x))
         x = self.fc3(x)
-        x = F.log_softmax(self.fc3(x),dim=1)
+        #x = F.log_softmax(self.fc3(x),dim=1)
         return x
     
 mlp = Net()
+   
 
 
 def train_network_classification(net, train_loader, test_loader):
