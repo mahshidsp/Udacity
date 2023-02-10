@@ -35,7 +35,7 @@ class Predictor(nn.Module):
             x  = self.model(x)# YOUR CODE HERE
             # 3. apply softmax
             #    HINT: remmeber to apply softmax across dim=1
-            softmax=torch.nn.Softmax(dim=1)
+            softmax=nn.Softmax(dim=1)
             x  =softmax(x)# YOUR CODE HERE
             #pred = x.data.max(1, keepdim=True)[1]
 
